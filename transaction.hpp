@@ -1,3 +1,6 @@
+#ifndef TRANSACTION_H
+#define TRANSACTION_H
+
 #include <vector>
 
 enum STATE { WAITING, ACTIVE, COMMITED };
@@ -9,7 +12,7 @@ class Transaction
 {
 public:
     // Identificador
-    int Id;
+    int ID;
     // Estado da Transação
     STATE state;
     // Lista de Transações pelas quais esta espera
@@ -18,4 +21,10 @@ public:
     vector< pair<OP, int> > operationsDone;
     // Lista de Operações em espera
     vector< pair<OP, int> > operationsWaiting;
+    Transaction(int transactionID, STATE initialState)
+    {
+        ID = transactionID;
+        state = initialState;
+    }
 };
+#endif

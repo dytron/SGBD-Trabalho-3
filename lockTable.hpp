@@ -1,7 +1,10 @@
+#ifndef LOCKTABLE_H
+#define LOCKTABLE_H
+
 #include <fstream>
 #include <sstream>
 
-enum LOCK { SHARED, EXCLUSIVE };
+enum LOCK { NONE, SHARED, EXCLUSIVE };
 class LockTable
 {
 public:
@@ -9,12 +12,13 @@ public:
     {
 
     }
-    bool checkLock(int D)
+    LOCK checkLock(int D)
     {
-        return false;
+        return NONE;
     }
     void removeLocks(int Tid)
     {
 
     }
 };
+#endif

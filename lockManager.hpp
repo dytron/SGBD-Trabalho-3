@@ -1,4 +1,6 @@
-#include "transactionManager.hpp"
+#ifndef LOCK_MANAGER_H
+#define LOCK_MANAGER_H
+
 #include "lockTable.hpp"
 #include <queue>
 
@@ -29,3 +31,4 @@ public:
 
     }
 };
+#endif

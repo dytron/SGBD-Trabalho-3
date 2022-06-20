@@ -1,15 +1,12 @@
-#include "managers.hpp"
+#include "transactionManager.hpp"
+#include "lockManager.hpp"
 #include <map>
 #include <iostream>
 
 using namespace std;
 
-// Log no console
-#define outlog cout
-// Log no arquivo log.txt (Comente o outro se usar este)
-// ofstream outlog("log.txt");
-TransactionManager TM();
-LockManager LM();
+TransactionManager TM;
+LockManager LM;
 map<string, int> dataID;
 vector<string> result;
 
@@ -18,6 +15,7 @@ void handleInput(string operation, int transactionID, string item = "")
     if (operation == "BT")
     {
         outlog << "Criar Transacao " << transactionID << endl;
+        TM.addTransaction(transactionID);
     }
     else if (operation == "C")
     {
@@ -25,17 +23,27 @@ void handleInput(string operation, int transactionID, string item = "")
     }
     else
     {
+        int op = (operation == "r") ? READ : WRITE; 
         // Adicione o item no map, se ainda não estiver mapeado
         if (dataID.find(item) == dataID.end())
             dataID[item] = dataID.size();
-        int itemID = dataID[item];
-        if (operation == "r")
+        int D = dataID[item];
+        if (op == READ)
         {
-            outlog << "Transacao " << transactionID << " lendo dado " << itemID << endl;
+            // Se o lock não for exclusivo, adiciono NA lockTable
+            if (LM.lockTable.checkLock(D) != EXCLUSIVE)
+            {
+                LM.lockTable.addLock(D, SHARED);
+            }
+            else
+            {
+
+            }
+            outlog << "Transacao " << transactionID << " lendo dado " << D << endl;
         }
-        else if (operation == "w")
+        else
         {
-            outlog << "Transacao " << transactionID << " escrevendo dado " << itemID << endl;
+            outlog << "Transacao " << transactionID << " escrevendo dado " << D << endl;
         }
     }
 }

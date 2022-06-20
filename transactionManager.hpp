@@ -1,4 +1,8 @@
+#ifndef TRANSACTION_MANAGER_H
+#define TRANSACTION_MANAGER_H
+
 #include "transaction.hpp"
+#include "log.hpp"
 
 using namespace std;
 
@@ -12,7 +16,9 @@ public:
     {
         // Criar uma transação com id TrTs, estado ACTIVE
         // Incrementa TrTs
-        TrTs++;
         // Adiciona no vetor transactions
+        transactions.push_back(Transaction((TrTs++), ACTIVE));
+        outlog << "adicionei no vetor de transacoes\n";
     }
 };
+#endif
