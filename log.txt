@@ -1,0 +1,9 @@
+Criar Transacao 1
+Criar Transacao 2
+Transacao 1 lendo dado 0
+Transacao 1 escrevendo dado 0
+Transacao 2 escrevendo dado 0
+Transacao 1 escrevendo dado 1
+Transacao 2 lendo dado 0
+Commitar Transacao 1
+Commitar Transacao 2
