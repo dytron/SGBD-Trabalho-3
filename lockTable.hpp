@@ -1,8 +1,7 @@
 #ifndef LOCKTABLE_H
 #define LOCKTABLE_H
 
-#include <fstream>
-#include <sstream>
+#include "log.hpp"
 
 enum LOCK { NONE, SHARED, EXCLUSIVE };
 class LockTable
