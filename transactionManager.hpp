@@ -10,15 +10,24 @@ class TransactionManager
 {
 public:
     // TimeStamp (Contador de Transações)
-    int TrTs = 1;
-    vector<Transaction> transactions;
-    void addTransaction(int id)
+    static inline int Tr;
+    static inline vector<Transaction> transactions;
+    static void addTransaction(int id)
     {
-        // Criar uma transação com id TrTs, estado ACTIVE
-        // Incrementa TrTs
+        // Criar uma transação com id Tr, estado ACTIVE
+        // Incrementa Tr
         // Adiciona no vetor transactions
-        transactions.push_back(Transaction((TrTs++), ACTIVE));
-        outlog << "adicionei no vetor de transacoes\n";
+        transactions.emplace_back(Transaction(id, Tr++, ACTIVE));
+        outlog << "Adicionei Transacao " << id << " com TS = " << Tr - 1 << " no vetor de transacoes\n";
+    }
+    static Transaction getTransaction(int id)
+    {
+        for (auto T : transactions)
+            if (T.ID == id)
+                return T;
+        outlog << "ID de Transação Inválido! (" << id << ")" << endl;
+        exit(1);
     }
 };
+
 #endif

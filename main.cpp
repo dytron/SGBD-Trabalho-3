@@ -5,8 +5,7 @@
 
 using namespace std;
 
-TransactionManager TM;
-LockManager LM;
+LockManager LM(WAIT_DIE);
 map<string, int> dataID;
 vector<string> result;
 
@@ -14,36 +13,67 @@ void handleInput(string operation, int transactionID, string item = "")
 {
     if (operation == "BT")
     {
-        outlog << "Criar Transacao " << transactionID << endl;
-        TM.addTransaction(transactionID);
+        TransactionManager::addTransaction(transactionID);
     }
     else if (operation == "C")
     {
+        /*
+        Transaction Tx = TransactionManager::getTransaction(transactionID);
+        if (Tx.state == WAITING || Tx.state == ROLLBACKED)
+        {
+            Tx.operationsWaiting.emplace_back(make_pair(COMMIT, 0));
+        }
+        else if (Tx.state == ACTIVE)
+        {
+            for (auto T : TransactionManager::transactions)
+            {
+                if (T.state == ROLLBACKED)
+                {
+                    // Executar handleInput para cada op de operationsWaiting
+                }
+            }
+            vector<LockTransaction> locks = LM.lockTable.removeLocks(Tx.ID);
+            for (auto lock : locks)
+            {
+                auto itemTr = LM.waitForDataList[lock.item].front();
+                int TID = itemTr.first;
+                LOCK itemLock(itemTr.second);
+                LockTransaction lt = LM.lockTable.getLock(lock.item, TID);
+                if (itemLock == EXCLUSIVE)
+                {
+                    
+                }
+                else
+                {
+                    
+                }
+            }
+        }*/
         outlog << "Commitar Transacao " << transactionID << endl;
     }
     else
     {
-        int op = (operation == "r") ? READ : WRITE; 
+        OP op = (operation == "r") ? READ : WRITE; 
         // Adicione o item no map, se ainda não estiver mapeado
         if (dataID.find(item) == dataID.end())
             dataID[item] = dataID.size();
         int D = dataID[item];
-        if (op == READ)
+        Transaction Tx = TransactionManager::getTransaction(transactionID);
+        if (Tx.state == WAITING || Tx.state == ROLLBACKED)
         {
-            // Se o lock não for exclusivo, adiciono NA lockTable
-            if (LM.lockTable.checkLock(D) != EXCLUSIVE)
-            {
-                LM.lockTable.addLock(D, SHARED);
-            }
-            else
-            {
-
-            }
-            outlog << "Transacao " << transactionID << " lendo dado " << D << endl;
+            Tx.operationsWaiting.emplace_back(make_pair(op, D));
         }
+        // Leitura
+        else if (op == READ)
+        {
+            outlog << "Transacao " << transactionID << " lendo dado " << D << endl;
+            LM.LS(Tx, D, op);
+        }
+        // Escrita
         else
         {
             outlog << "Transacao " << transactionID << " escrevendo dado " << D << endl;
+            LM.LX(Tx, D, op);
         }
     }
 }
@@ -69,12 +99,13 @@ int main() {
      * Se você quiser fazer um read e tiver um shared lock no item de dado
      * addLock(X, SHARED, itemID)
      * Se você quiser fazer um read e tiver um exclusive lock no item de dado
-     * Se o Protocolo for Wait-Die, se X.ID < Y.ID
+     * Se o Protocolo for Wait-Die, se X.TS < Y.TS
      *  X entra em modo de espera
      *  waitForDataList[itemID].emplace_back(make_pair(X, SHARED)) adiada
      *  X.operationsWaiting.emplace_back(make_pair(op, itemID))
      * 
      **/
+    TransactionManager::Tr = 0;
     ifstream in("in.txt");
     char c; 
     int paramID = 0;

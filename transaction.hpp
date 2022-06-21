@@ -3,7 +3,7 @@
 
 #include <vector>
 
-enum STATE { WAITING, ACTIVE, COMMITED };
+enum STATE { WAITING, ACTIVE, COMMITED, ROLLBACKED };
 enum OP { READ, WRITE, COMMIT };
 
 using namespace std;
@@ -13,6 +13,8 @@ class Transaction
 public:
     // Identificador
     int ID;
+    // TimeStamp
+    int TS;
     // Estado da Transação
     STATE state;
     // Lista de Transações pelas quais esta espera
@@ -21,9 +23,10 @@ public:
     vector< pair<OP, int> > operationsDone;
     // Lista de Operações em espera
     vector< pair<OP, int> > operationsWaiting;
-    Transaction(int transactionID, STATE initialState)
+    Transaction(int transactionID, int timeStamp, STATE initialState)
     {
         ID = transactionID;
+        TS = timeStamp;
         state = initialState;
     }
 };
