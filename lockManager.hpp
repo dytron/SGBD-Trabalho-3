@@ -24,7 +24,7 @@ public:
     void LS(Transaction Tx, int D, OP op)
     {
         auto locktr = lockTable.getLock(D);
-        logLock(D, locktr.lock, Tx.ID);
+        logLock(D, locktr.lock, locktr.transactionID);
         // Se o lock não for exclusivo, adiciono na lockTable e na lista de operações feitas
         if (locktr.lock != EXCLUSIVE)
         {
@@ -56,18 +56,18 @@ public:
     void LX(Transaction Tx, int D, OP op)
     {
         auto locktr = lockTable.getLock(D, Tx.ID);
-        logLock(D, locktr.lock, Tx.ID);
+        logLock(D, locktr.lock, locktr.transactionID);
         // Se não houver lock, adiciono na lockTable e na lista de operações feitas
         if (locktr.lock == NONE)
         {
-            outlog << "Adiciona Lock. D = " << D << ", L = X " << ", T = " <<  Tx.ID << endl; 
+            outlog << "Adiciona Lock. D = " << D << ", L = X, T = " <<  Tx.ID << endl; 
             lockTable.addLock(D, EXCLUSIVE, Tx.ID);
             Tx.operationsDone.emplace_back(make_pair(op, D));
         }
         // Se houver um shared lock, mas for da mesma transação
         else if (locktr.lock == SHARED && locktr.transactionID == Tx.ID)
         {
-            outlog << "Atualiza Lock. D = " << D << ", L = X " << ", T = " <<  Tx.ID << endl; 
+            outlog << "Atualiza Lock. D = " << D << ", L = X, T = " <<  Tx.ID << endl; 
             lockTable.updateLock(D, EXCLUSIVE, Tx.ID);
             Tx.operationsDone.emplace_back(make_pair(op, D));
         }

@@ -9,6 +9,58 @@ LockManager LM(WAIT_DIE);
 map<string, int> dataID;
 vector<string> result;
 
+// Lida com operações COMMIT, READ ou WRITE
+void handleCRW(Transaction Tx, int D, OP op)
+{
+    if (Tx.state == WAITING || Tx.state == ROLLBACKED)
+    {
+        Tx.operationsWaiting.emplace_back(make_pair(op, D));
+    }
+    else if (op == COMMIT && Tx.state == ACTIVE)
+    {
+        for (auto T : TransactionManager::transactions)
+        {
+            if (T.state == ROLLBACKED)
+            {
+                // Executar handlecrw para cada op de operationsWaiting
+                for (auto opwaiting : Tx.operationsWaiting)
+                {
+                    handleCRW(Tx, opwaiting.second, OP(opwaiting.first));
+                }
+            }
+        }
+        vector<LockTransaction> locks = LM.lockTable.removeLocks(Tx.ID);
+        for (auto lock : locks)
+        {
+            auto itemTr = LM.waitForDataList[lock.item].front();
+            int TID = itemTr.first;
+            LOCK itemLock(itemTr.second);
+            LockTransaction lt = LM.lockTable.getLock(lock.item, TID);
+            if (itemLock == EXCLUSIVE)
+            {
+                
+            }
+            else
+            {
+                
+            }
+        }
+        outlog << "Commitar Transacao " << Tx.ID << endl;
+    }
+    // Leitura
+    else if (op == READ)
+    {
+        outlog << "Transacao " << Tx.ID << " lendo dado " << D << endl;
+        LM.LS(Tx, D, op);
+    }
+    // Escrita
+    else if (op == WRITE)
+    {
+        outlog << "Transacao " << Tx.ID << " escrevendo dado " << D << endl;
+        LM.LX(Tx, D, op);
+    }
+}
+
 void handleInput(string operation, int transactionID, string item = "")
 {
     if (operation == "BT")
@@ -17,39 +69,8 @@ void handleInput(string operation, int transactionID, string item = "")
     }
     else if (operation == "C")
     {
-        /*
         Transaction Tx = TransactionManager::getTransaction(transactionID);
-        if (Tx.state == WAITING || Tx.state == ROLLBACKED)
-        {
-            Tx.operationsWaiting.emplace_back(make_pair(COMMIT, 0));
-        }
-        else if (Tx.state == ACTIVE)
-        {
-            for (auto T : TransactionManager::transactions)
-            {
-                if (T.state == ROLLBACKED)
-                {
-                    // Executar handleInput para cada op de operationsWaiting
-                }
-            }
-            vector<LockTransaction> locks = LM.lockTable.removeLocks(Tx.ID);
-            for (auto lock : locks)
-            {
-                auto itemTr = LM.waitForDataList[lock.item].front();
-                int TID = itemTr.first;
-                LOCK itemLock(itemTr.second);
-                LockTransaction lt = LM.lockTable.getLock(lock.item, TID);
-                if (itemLock == EXCLUSIVE)
-                {
-                    
-                }
-                else
-                {
-                    
-                }
-            }
-        }*/
-        outlog << "Commitar Transacao " << transactionID << endl;
+        handleCRW(Tx, 0, COMMIT);
     }
     else
     {
@@ -59,25 +80,10 @@ void handleInput(string operation, int transactionID, string item = "")
             dataID[item] = dataID.size();
         int D = dataID[item];
         Transaction Tx = TransactionManager::getTransaction(transactionID);
-        if (Tx.state == WAITING || Tx.state == ROLLBACKED)
-        {
-            Tx.operationsWaiting.emplace_back(make_pair(op, D));
-        }
-        // Leitura
-        else if (op == READ)
-        {
-            outlog << "Transacao " << transactionID << " lendo dado " << D << endl;
-            LM.LS(Tx, D, op);
-        }
-        // Escrita
-        else
-        {
-            outlog << "Transacao " << transactionID << " escrevendo dado " << D << endl;
-            LM.LX(Tx, D, op);
-        }
+        handleCRW(Tx, D, op);
     }
 }
-int main() {
+int main(int argc, char** args) {
     // Ler história
     /**
      * Ler linha
@@ -106,7 +112,7 @@ int main() {
      * 
      **/
     TransactionManager::Tr = 0;
-    ifstream in("in.txt");
+    ifstream in((argc > 1) ? args[1] : "in.txt");
     char c; 
     int paramID = 0;
     string param[3] = {"", "", ""};
