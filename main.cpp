@@ -22,20 +22,21 @@ void handleCRW(Transaction Tx, int D, OP op)
         {
             if (T.state == ROLLBACKED)
             {
-                // Executar handlecrw para cada op de operationsWaiting
+                T.state == ACTIVE;
+                // Executar handleCRW para cada op de operationsWaiting
                 for (auto opwaiting : Tx.operationsWaiting)
                 {
                     handleCRW(Tx, opwaiting.second, OP(opwaiting.first));
                 }
             }
         }
-        vector<LockTransaction> locks = LM.lockTable.removeLocks(Tx.ID);
-        for (auto lock : locks)
+        vector<LockTransaction> locks = LM.lockTable.getAllLocks(Tx.ID);
+        for (auto L : locks)
         {
-            auto itemTr = LM.waitForDataList[lock.item].front();
+            auto itemTr = LM.waitForDataList[L.item].front();
             int TID = itemTr.first;
             LOCK itemLock(itemTr.second);
-            LockTransaction lt = LM.lockTable.getLock(lock.item, TID);
+            LockTransaction lt = LM.lockTable.getLock(L.item, TID);
             if (itemLock == EXCLUSIVE)
             {
                 
@@ -44,6 +45,7 @@ void handleCRW(Transaction Tx, int D, OP op)
             {
                 
             }
+            LM.U(Tx, L.item);
         }
         outlog << "Commitar Transacao " << Tx.ID << endl;
     }

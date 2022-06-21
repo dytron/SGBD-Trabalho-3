@@ -88,7 +88,7 @@ public:
     // Apaga o bloqueio da transação Tr sobre o item D
     void U(Transaction Tr, int D)
     {
-
+        lockTable.removeLock(D, Tr.ID);
     }
     LockManager(int protocolo)
     {

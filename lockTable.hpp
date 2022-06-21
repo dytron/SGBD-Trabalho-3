@@ -69,9 +69,40 @@ public:
         }
         return result;
     }
-    vector<LockTransaction> removeLocks(int transactionID)
+    // Retorna todos os locks feitos pela transação
+    vector<LockTransaction> getAllLocks(int transactionID = -1)
     {
-        return vector<LockTransaction>();
+        ifstream LT(file);
+        int itemID, lockInt, TID;
+        LOCK lock;
+        vector<LockTransaction> result;
+        while (!LT.eof())
+        {
+            LT >> itemID >> lockInt >> TID;
+            lock = LOCK(lockInt);
+            if (TID == transactionID)
+                result.emplace_back(LockTransaction(lock, TID, itemID));
+        }
+        return result;
+    }
+    // Remove o lock sobre D feito pela transação
+    void removeLock(int D, int transactionID)
+    {
+        ifstream in(file);
+        vector<LockTransaction> table;
+        int itemID, lockInt, TID;
+        while (in >> itemID >> lockInt >> TID)
+        {
+            // Se não for o lock que eu quero remover, continua na LockTable
+            if (itemID != D || transactionID != TID)
+                table.emplace_back(LockTransaction(LOCK(lockInt), TID, itemID));
+        }
+        in.close();
+        ofstream LT;
+        LT.open(file);
+        for (auto line : table)
+            LT << line.item << " " << line.lock << " " << line.transactionID << endl;
+        LT.close();
     }
     LockTable()
     {
