@@ -5,6 +5,7 @@
 #include "lockTable.hpp"
 #include "log.hpp"
 #include <queue>
+#include <map>
 
 using namespace std;
 
@@ -17,8 +18,63 @@ public:
     int protocolo;
     // Tabela de bloqueios sobre os itens de dados
     LockTable lockTable;
+    // Mapeamento dos dados para inteiro
+    map<string, int> dataID;
     // Lista que contém, para cada item de dado, uma fila de transação e modo de bloqueio
     vector< queue< pair<int, LOCK> > > waitForDataList;
+    // Lida com operações COMMIT, READ ou WRITE
+    void handleCRW(Transaction Tx, int D, OP op)
+    {
+        if (Tx.state == WAITING || Tx.state == ROLLBACKED)
+        {
+            Tx.operationsWaiting.emplace_back(make_pair(op, D));
+        }
+        else if (op == COMMIT && Tx.state == ACTIVE)
+        {
+            for (auto T : TransactionManager::transactions)
+            {
+                if (T.state == ROLLBACKED)
+                {
+                    T.state == ACTIVE;
+                    // Executar handleCRW para cada op de operationsWaiting
+                    for (auto opwaiting : Tx.operationsWaiting)
+                    {
+                        handleCRW(Tx, opwaiting.second, OP(opwaiting.first));
+                    }
+                }
+            }
+            vector<LockTransaction> locks = lockTable.getAllLocks(Tx.ID);
+            for (auto L : locks)
+            {
+                auto itemTr = waitForDataList[L.item].front();
+                int TID = itemTr.first;
+                LOCK itemLock(itemTr.second);
+                LockTransaction lt = lockTable.getLock(L.item, TID);
+                if (itemLock == EXCLUSIVE)
+                {
+                    
+                }
+                else
+                {
+                    
+                }
+                U(Tx, L.item);
+            }
+            outlog << "Commitar Transacao " << Tx.ID << endl;
+        }
+        // Leitura
+        else if (op == READ)
+        {
+            outlog << "Transacao " << Tx.ID << " lendo dado " << D << endl;
+            LS(Tx, D, op);
+        }
+        // Escrita
+        else if (op == WRITE)
+        {
+            outlog << "Transacao " << Tx.ID << " escrevendo dado " << D << endl;
+            LX(Tx, D, op);
+        }
+    }
     // Insere um bloqueio no modo compartilhado na Lock Table sobre o item D para a transação Tr se puder,
     // Caso contrário cria/atualiza a Wait Q de D com a transação Tr
     void LS(Transaction Tx, int D, OP op)
@@ -89,6 +145,14 @@ public:
     void U(Transaction Tr, int D)
     {
         lockTable.removeLock(D, Tr.ID);
+    }
+    // Retorna o índice do item de dado no mapeamento
+    int getDataID(string item)
+    {
+        // Adicione o item no map, se ainda não estiver mapeado
+        if (dataID.find(item) == dataID.end())
+            dataID[item] = dataID.size();
+        return dataID[item];
     }
     LockManager(int protocolo)
     {

@@ -5,7 +5,7 @@
 #include <fstream>
 
 enum LOCK { NONE, SHARED, EXCLUSIVE };
-
+// Estrutura que representa uma linha da LockTable
 struct LockTransaction
 {
     int item;
@@ -26,43 +26,45 @@ public:
     void addLock(int D, LOCK lock, int transactionID)
     {
         ofstream LT(file, ios::app);
-        LT << D << " " << lock << " " << transactionID << endl;
+        LT << D << " " << getLockString(lock) << " " << transactionID << endl;
     }
     // Atualiza uma linha na LockTable
     void updateLock(int D, LOCK lock, int transactionID)
     {
         ifstream in(file);
         vector<LockTransaction> table;
-        int itemID, lockInt, TID;
-        while (in >> itemID >> lockInt >> TID)
+        int itemID, TID;
+        string lockStr;
+        while (in >> itemID >> lockStr >> TID)
         {
             if (itemID == D && transactionID == TID)
-                lockInt = lock;
-            table.emplace_back(LockTransaction(LOCK(lockInt), TID, itemID));
+                lockStr = getLockString(lock);
+            table.emplace_back(LockTransaction(getLockEnum(lockStr), TID, itemID));
         }
         in.close();
         ofstream LT;
         LT.open(file);
         for (auto line : table)
-            LT << line.item << " " << line.lock << " " << line.transactionID << endl;
+            LT << line.item << " " << getLockString(line.lock) << " " << line.transactionID << endl;
         LT.close();
     }
     // Retorna ID da transação e tipo de bloqueio do item D
     LockTransaction getLock(int D, int transactionID = -1)
     {
         ifstream LT(file);
-        int itemID, lockInt, TID;
+        int itemID, TID;
         LOCK lock;
+        string lockStr;
         LockTransaction result(NONE);
-        while (!LT.eof())
+        while (LT >> itemID >> lockStr >> TID)
         {
-            LT >> itemID >> lockInt >> TID;
-            lock = LOCK(lockInt);
+            lock = getLockEnum(lockStr);
             if (D == itemID)
             {            
                 // Há um lock de outra transação para o mesmo dado (conflito!)
                 if (TID != transactionID)
                     return LockTransaction(lock, TID);
+                // Lock desta transação, vamos esperar até o fim para checar se é o único
                 else
                     result = LockTransaction(lock, TID);
             }
@@ -73,16 +75,12 @@ public:
     vector<LockTransaction> getAllLocks(int transactionID = -1)
     {
         ifstream LT(file);
-        int itemID, lockInt, TID;
-        LOCK lock;
+        int itemID, TID;
+        string lockStr;
         vector<LockTransaction> result;
-        while (!LT.eof())
-        {
-            LT >> itemID >> lockInt >> TID;
-            lock = LOCK(lockInt);
+        while (LT >> itemID >> lockStr >> TID)
             if (TID == transactionID)
-                result.emplace_back(LockTransaction(lock, TID, itemID));
-        }
+                result.emplace_back(LockTransaction(getLockEnum(lockStr), TID, itemID));
         return result;
     }
     // Remove o lock sobre D feito pela transação
@@ -90,19 +88,32 @@ public:
     {
         ifstream in(file);
         vector<LockTransaction> table;
-        int itemID, lockInt, TID;
-        while (in >> itemID >> lockInt >> TID)
+        string lockStr;
+        int itemID, TID;
+        while (in >> itemID >> lockStr >> TID)
         {
             // Se não for o lock que eu quero remover, continua na LockTable
             if (itemID != D || transactionID != TID)
-                table.emplace_back(LockTransaction(LOCK(lockInt), TID, itemID));
+                table.emplace_back(LockTransaction(getLockEnum(lockStr), TID, itemID));
         }
         in.close();
         ofstream LT;
         LT.open(file);
         for (auto line : table)
-            LT << line.item << " " << line.lock << " " << line.transactionID << endl;
+            LT << line.item << " " << getLockString(line.lock) << " " << line.transactionID << endl;
         LT.close();
+    }
+    string getLockString(LOCK lock)
+    {
+        if (lock == SHARED)
+            return "S";
+        return "X";
+    }
+    LOCK getLockEnum(string c)
+    {
+        if (c == "S")
+            return SHARED;
+        return EXCLUSIVE;
     }
     LockTable()
     {

@@ -1,89 +1,24 @@
 #include "transactionManager.hpp"
 #include "lockManager.hpp"
-#include <map>
 #include <iostream>
 
 using namespace std;
 
 LockManager LM(WAIT_DIE);
-map<string, int> dataID;
 vector<string> result;
-
-// Lida com operações COMMIT, READ ou WRITE
-void handleCRW(Transaction Tx, int D, OP op)
-{
-    if (Tx.state == WAITING || Tx.state == ROLLBACKED)
-    {
-        Tx.operationsWaiting.emplace_back(make_pair(op, D));
-    }
-    else if (op == COMMIT && Tx.state == ACTIVE)
-    {
-        for (auto T : TransactionManager::transactions)
-        {
-            if (T.state == ROLLBACKED)
-            {
-                T.state == ACTIVE;
-                // Executar handleCRW para cada op de operationsWaiting
-                for (auto opwaiting : Tx.operationsWaiting)
-                {
-                    handleCRW(Tx, opwaiting.second, OP(opwaiting.first));
-                }
-            }
-        }
-        vector<LockTransaction> locks = LM.lockTable.getAllLocks(Tx.ID);
-        for (auto L : locks)
-        {
-            auto itemTr = LM.waitForDataList[L.item].front();
-            int TID = itemTr.first;
-            LOCK itemLock(itemTr.second);
-            LockTransaction lt = LM.lockTable.getLock(L.item, TID);
-            if (itemLock == EXCLUSIVE)
-            {
-                
-            }
-            else
-            {
-                
-            }
-            LM.U(Tx, L.item);
-        }
-        outlog << "Commitar Transacao " << Tx.ID << endl;
-    }
-    // Leitura
-    else if (op == READ)
-    {
-        outlog << "Transacao " << Tx.ID << " lendo dado " << D << endl;
-        LM.LS(Tx, D, op);
-    }
-    // Escrita
-    else if (op == WRITE)
-    {
-        outlog << "Transacao " << Tx.ID << " escrevendo dado " << D << endl;
-        LM.LX(Tx, D, op);
-    }
-}
-
+// Lida com uma entrada da história
 void handleInput(string operation, int transactionID, string item = "")
 {
+    // Início da Transação
     if (operation == "BT")
-    {
-        TransactionManager::addTransaction(transactionID);
-    }
-    else if (operation == "C")
-    {
-        Transaction Tx = TransactionManager::getTransaction(transactionID);
-        handleCRW(Tx, 0, COMMIT);
-    }
-    else
-    {
-        OP op = (operation == "r") ? READ : WRITE; 
-        // Adicione o item no map, se ainda não estiver mapeado
-        if (dataID.find(item) == dataID.end())
-            dataID[item] = dataID.size();
-        int D = dataID[item];
-        Transaction Tx = TransactionManager::getTransaction(transactionID);
-        handleCRW(Tx, D, op);
-    }
+        return TransactionManager::addTransaction(transactionID);
+    Transaction Tx = TransactionManager::getTransaction(transactionID);
+    // Commit
+    if (operation == "C")
+        return LM.handleCRW(Tx, 0, COMMIT);
+    // Read ou Write
+    OP op = (operation == "r") ? READ : WRITE;
+    return LM.handleCRW(Tx, LM.getDataID(item), op);
 }
 int main(int argc, char** args) {
     // Ler história
