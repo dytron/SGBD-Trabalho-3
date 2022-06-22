@@ -3,6 +3,7 @@
 
 #include "transaction.hpp"
 #include "log.hpp"
+#include "enums.hpp"
 
 using namespace std;
 

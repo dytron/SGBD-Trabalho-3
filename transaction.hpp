@@ -2,23 +2,17 @@
 #define TRANSACTION_H
 
 #include <vector>
-
-//
-enum STATE {
-    WAITING,   // Em espera
-    ACTIVE,    // Ativa
-    COMMITED,  // Transação efetivada
-    ROLLBACKED // Sofreu rollback
-};
-enum OP {
-    START,
-    READ,  // Leitura
-    WRITE, // Escrita
-    COMMIT // Efetivação
-};
+#include "enums.hpp"
 
 using namespace std;
 
+struct Operation
+{
+    OP op;      // Operação
+    int TID;    // Transação
+    int opID;   // ID da operação (vem da historia de entrada)
+    int itemID; // Item
+};
 class Transaction
 {
 public:
@@ -31,9 +25,9 @@ public:
     // Lista de Transações pelas quais esta espera
     vector<int> waitForList;
     // Lista de <Operações, Item> que já foram realizadas
-    vector< pair<OP, int> > operationsDone;
+    vector<Operation> operationsDone;
     // Lista de Operações em espera
-    vector< pair<OP, int> > operationsWaiting;
+    vector<Operation> operationsWaiting;
     Transaction(int transactionID, int timeStamp, STATE initialState)
     {
         ID = transactionID;

@@ -2,9 +2,10 @@
 #define LOCKTABLE_H
 
 #include "log.hpp"
-#include <fstream>
+#include "enums.hpp"
 
-enum LOCK { NONE, SHARED, EXCLUSIVE };
+using namespace std;
+
 // Estrutura que representa uma linha da LockTable
 struct LockTransaction
 {
@@ -27,11 +28,13 @@ public:
     {
         ofstream LT(file, ios::app);
         LT << D << " " << getLockString(lock) << " " << transactionID << endl;
+        LT.close();
     }
     // Atualiza uma linha na LockTable
     void updateLock(int D, LOCK lock, int transactionID)
     {
-        ifstream in(file);
+        ifstream in;
+        in.open(file);
         vector<LockTransaction> table;
         int itemID, TID;
         string lockStr;
@@ -51,7 +54,8 @@ public:
     // Retorna ID da transação e tipo de bloqueio do item D
     LockTransaction getLock(int D, int transactionID = -1)
     {
-        ifstream LT(file);
+        ifstream LT;
+        LT.open(file);
         int itemID, TID;
         LOCK lock;
         string lockStr;
@@ -63,24 +67,30 @@ public:
             {            
                 // Há um lock de outra transação para o mesmo dado (conflito!)
                 if (TID != transactionID)
+                {
+                    LT.close();
                     return LockTransaction(lock, TID);
-                // Lock desta transação, vamos esperar até o fim para checar se é o único
+                }// Lock desta transação, vamos esperar até o fim para checar se é o único
                 else
                     result = LockTransaction(lock, TID);
             }
         }
+        LT.close();
         return result;
     }
     // Retorna todos os locks feitos pela transação
-    vector<LockTransaction> getAllLocks(int transactionID = -1)
+    vector<LockTransaction> getAllLocks(int transactionID)
     {
-        ifstream LT(file);
-        int itemID, TID;
-        string lockStr;
         vector<LockTransaction> result;
-        while (LT >> itemID >> lockStr >> TID)
-            if (TID == transactionID)
-                result.emplace_back(LockTransaction(getLockEnum(lockStr), TID, itemID));
+        ifstream LT(file);
+        if (LT)
+        {
+            int itemID, TID;
+            string lockStr;
+            while (LT >> itemID >> lockStr >> TID)
+                if (TID == transactionID)
+                    result.emplace_back(LockTransaction(getLockEnum(lockStr), TID, itemID));
+        }
         return result;
     }
     // Retorna todos os locks sobre um item
@@ -90,15 +100,19 @@ public:
         int itemID, TID;
         string lockStr;
         vector<LockTransaction> result;
-        while (LT >> itemID >> lockStr >> TID)
-            if (itemID == D)
-                result.emplace_back(LockTransaction(getLockEnum(lockStr), TID, itemID));
+        if (LT)
+        {
+            while (LT >> itemID >> lockStr >> TID)
+                if (itemID == D)
+                    result.emplace_back(LockTransaction(getLockEnum(lockStr), TID, itemID));
+        }
         return result;
     }
     // Remove o lock sobre D feito pela transação
     void removeLock(int D, int transactionID)
     {
-        ifstream in(file);
+        ifstream in;
+        in.open(file);
         vector<LockTransaction> table;
         string lockStr;
         int itemID, TID;
@@ -130,6 +144,7 @@ public:
     LockTable()
     {
         ofstream LT(file);
+        LT.close();
     }
 };
 #endif

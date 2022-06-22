@@ -1,24 +1,19 @@
-Grafo: 
-Grafo: 
-Grafo: 
-Grafo: 
-Grafo: 
-Grafo: 2->3; 
-Grafo: 1->2; 1->3; 2->3; 
-Grafo: 1->2; 1->3; 2->3; 
-Grafo: 1->2; 1->3; 2->3; 
-Grafo: 1->2; 1->3; 2->3; 
-Grafo: 1->2; 
-Grafo: 1->2; 
-Grafo: 
-Grafo: 
-Grafo: 
+Grafo apos comando 1 = 
+Grafo apos comando 2 = 
+Grafo apos comando 3 = 
+Grafo apos comando 4 = 
+Grafo apos comando 5 = 2->1; 
+Grafo apos comando 6 = 2->1; 
+Grafo apos comando 7 = 2->1; 
+Grafo apos comando 8 = 
+Grafo apos comando 5 = 
+Grafo apos comando 7 = 
+Grafo apos comando 9 = 
 Historia realizada:
-r2(y)
-r3(y)
-C(3)
-w2(y)
-r2(z)
-C(2)
-w1(y)
+r1(a)
+w1(a)
+w1(b)
 C(1)
+w2(a)
+r2(a)
+C(2)

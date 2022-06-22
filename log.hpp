@@ -4,7 +4,7 @@
 #include <iostream>
 #include <fstream>
 #include <sstream>
-#include "lockTable.hpp"
+#include "enums.hpp"
 
 // Log no console
 int contador = 1;
