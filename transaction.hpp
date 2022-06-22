@@ -11,6 +11,7 @@ enum STATE {
     ROLLBACKED // Sofreu rollback
 };
 enum OP {
+    START,
     READ,  // Leitura
     WRITE, // Escrita
     COMMIT // Efetivação

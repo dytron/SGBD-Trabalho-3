@@ -12,6 +12,20 @@ using namespace std;
 #define WAIT_DIE 0
 #define WOUND_WAIT 1
 
+struct HistoryItem
+{
+    OP op;
+    int TID;
+    int item;
+    string text;
+    HistoryItem(OP operation, int transactionID, int itemData, string txt)
+    {
+        op = operation;
+        TID = transactionID;
+        item = itemData;
+        text = txt;
+    }
+};
 class LockManager
 {
 public:
@@ -21,6 +35,7 @@ public:
     // Mapeamento dos dados para inteiro
     map<string, int> dataID;
     vector<string> dataName;
+    vector<HistoryItem> history;
     // Lista que contém, para cada item de dado, uma fila de transação e modo de bloqueio
     vector< queue< pair<int, LOCK> > > waitForDataList;
     vector<int> waitCount;
@@ -32,6 +47,7 @@ public:
             outlog << "Transacao " << Tx.ID << " tem operacao " 
                 << getOpName(op) << "(" << ((op == COMMIT) ? "" : dataName[D]) << ") postergada" << endl;
             Tx.operationsWaiting.emplace_back(make_pair(op, D));
+            showGraph();
         }
         else if (op == COMMIT && Tx.state == ACTIVE)
         {
@@ -45,6 +61,20 @@ public:
                 U(Tx, L.item);
             }
             Tx.state = COMMITED;
+            addHistory(COMMIT, Tx.ID, 0);
+            for (auto &T : TransactionManager::transactions)
+            {
+                int index = -1, i = 0;
+                while (i < T.waitForList.size())
+                {
+                    if (T.waitForList[i] == Tx.ID)
+                    {
+                        T.waitForList.erase(T.waitForList.begin() + i);
+                    }
+                    else i++;
+                }
+            }
+            showGraph();
             // E liberamos um por um e executamos operações das transações que esperavam por este lock
             for (auto L : locks)
             {
@@ -94,6 +124,7 @@ public:
                     }
                 }
             }
+            
         }
         // Leitura
         else if (op == READ)
@@ -121,6 +152,8 @@ public:
             if (locktr.transactionID != Tx.ID)
                 lockTable.addLock(D, SHARED, Tx.ID);
             Tx.operationsDone.emplace_back(make_pair(op, D));
+            addHistory(op, Tx.ID, D);
+            showGraph();
         }
         else
         {
@@ -140,6 +173,8 @@ public:
             //outlog << "Adiciona Lock. D = " << D << ", L = X, T = " <<  Tx.ID << endl; 
             lockTable.addLock(D, EXCLUSIVE, Tx.ID);
             Tx.operationsDone.emplace_back(make_pair(op, D));
+            addHistory(op, Tx.ID, D);
+            showGraph();
         }
         // Se houver um shared lock, mas for da mesma transação
         else if (locktr.transactionID == Tx.ID)
@@ -151,6 +186,7 @@ public:
                 lockTable.updateLock(D, EXCLUSIVE, Tx.ID);
             }
             Tx.operationsDone.emplace_back(make_pair(op, D));
+            addHistory(op, Tx.ID, D);
         }
         else
         {
@@ -168,6 +204,7 @@ public:
     {
         if (protocolo == WAIT_DIE)
         {
+            // Tx espera por Ty
             if (Tx.TS < Ty.TS)
             {
                 outlog << "Transacao " << Tx.ID << " espera" << endl;
@@ -175,12 +212,19 @@ public:
                 waitForDataList[D].emplace(make_pair(Tx.ID, lock));
                 waitCount[D]++;
                 Tx.operationsWaiting.emplace_back(make_pair(op, D));
+                //Tx.waitForList.emplace_back(Ty.ID);
+                auto locks = lockTable.getAllLocksFromData(D);
+                for (auto L : locks)
+                    if (L.transactionID != Tx.ID)
+                        Tx.waitForList.emplace_back(L.transactionID);
+                showGraph();
             }
             else
             {
                 // Rollback Tx
                 Tx.state = ROLLBACKED;
                 // Remover tudo o que estava no Tx.operationsDone do escalonamento
+                deleteTransactionFromHistory(Tx.ID);
                 // Tx.operationsDone passa para o waiting
                 Tx.operationsWaiting.emplace_back(make_pair(op, D));
                 for (auto opWait : Tx.operationsWaiting)
@@ -195,6 +239,7 @@ public:
                     waitQ.pop();
                 }
                 outlog << "Transacao " << Tx.ID << " sofreu rollback" << endl << "Fila de " << dataName[D] << " = " << result << endl;
+                out << "Lista do item de dado " << dataName[D] << " rollback = " << result << endl;
                 // Libera todos os locks
                 auto transactionLocks = lockTable.getAllLocks(Tx.ID);
                 for (auto L : transactionLocks)
@@ -258,6 +303,50 @@ public:
     LockManager(int protocolo)
     {
         this->protocolo = protocolo;
+    }
+    void showGraph()
+    {
+        out << "Grafo: ";
+        for (auto &T : TransactionManager::transactions)
+        {
+            for (auto waitingTID : T.waitForList)
+            {
+                out << T.ID << "->" << waitingTID << "; ";
+            }
+        }
+        out << endl;
+    }
+    void addHistory(OP op, int transactionID, int item)
+    {
+        string text;
+        if (op == COMMIT)
+            text = "C(" + to_string(transactionID) + ")";
+        else
+            text = ((op == READ) ? "r" : "w") + to_string(transactionID) + "(" + dataName[item] + ")";
+        outlog << "H add " << text << endl;
+        history.emplace_back(HistoryItem(op, transactionID, item, text));
+    }
+    void deleteTransactionFromHistory(int TID)
+    {
+        auto it = history.begin();
+        while(it != history.end())
+        {
+            if((*it).TID == TID)
+            {
+                outlog << "H remove " << (*it).text << endl;
+                it = history.erase(it);
+            }
+            else
+                it++;
+        }
+    }
+    void showHistory()
+    {
+        out << "Historia realizada:\n";
+        for (auto H : history)
+        {
+            out << H.text << endl;
+        }
     }
 };
 #endif

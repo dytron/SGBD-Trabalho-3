@@ -83,6 +83,18 @@ public:
                 result.emplace_back(LockTransaction(getLockEnum(lockStr), TID, itemID));
         return result;
     }
+    // Retorna todos os locks sobre um item
+    vector<LockTransaction> getAllLocksFromData(int D)
+    {
+        ifstream LT(file);
+        int itemID, TID;
+        string lockStr;
+        vector<LockTransaction> result;
+        while (LT >> itemID >> lockStr >> TID)
+            if (itemID == D)
+                result.emplace_back(LockTransaction(getLockEnum(lockStr), TID, itemID));
+        return result;
+    }
     // Remove o lock sobre D feito pela transação
     void removeLock(int D, int transactionID)
     {

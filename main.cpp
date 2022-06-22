@@ -11,7 +11,10 @@ void handleInput(string operation, int transactionID, string item = "")
 {
     // Início da Transação
     if (operation == "BT")
+    {
+        LM.showGraph();
         return TransactionManager::addTransaction(transactionID);
+    }
     Transaction &Tx = TransactionManager::getTransaction(transactionID);
     // Commit
     if (operation == "C")
@@ -75,7 +78,8 @@ int main(int argc, char** args) {
             if (paramID == 0 && (param[0] == "r" || param[0] == "w"))
                 paramID++;
         }
-    }   
+    }  
+    LM.showHistory();
     outlog << "Fim\n";
     return 0;
 }
