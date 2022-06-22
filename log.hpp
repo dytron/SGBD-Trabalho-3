@@ -6,11 +6,16 @@
 #include <sstream>
 #include "enums.hpp"
 
-// Log no console
 int contador = 1;
-#define outlog cout << contador++ << ". "
 ofstream out("out.txt");
-// Log no arquivo log.txt (Comente o outro se usar este)
+
+// Log com cout
+// #define outlog cout << contador++ << ". "
+
+// Log no arquivo log.txt
+// Comete essas duas linhas se quiser usar o cout
+ofstream outfile("log.txt");
+#define outlog outfile << contador++ << ". "
 // ofstream outlog("log.txt");
 void logLock(int D, LOCK L, int T)
 {
