@@ -18,12 +18,12 @@ public:
     {
         // Criar uma transação com id Tr, estado ACTIVE, incrementa Tr e adiciona no vetor transactions
         transactions.emplace_back(Transaction(id, Tr++, ACTIVE));
-        outlog << "Adicionei Transacao " << id << " com TS = " << Tr - 1 << " no vetor de transacoes\n";
+        outlog << "Adiciona Transacao " << id << " com TS = " << Tr - 1 << endl;
     }
     // Obter transação pelo ID
-    static Transaction getTransaction(int id)
+    static Transaction& getTransaction(int id)
     {
-        for (auto T : transactions)
+        for (auto &T : transactions)
             if (T.ID == id)
                 return T;
         outlog << "ID de Transação Inválido! (" << id << ")" << endl;

@@ -12,7 +12,7 @@ void handleInput(string operation, int transactionID, string item = "")
     // Início da Transação
     if (operation == "BT")
         return TransactionManager::addTransaction(transactionID);
-    Transaction Tx = TransactionManager::getTransaction(transactionID);
+    Transaction &Tx = TransactionManager::getTransaction(transactionID);
     // Commit
     if (operation == "C")
         return LM.handleCRW(Tx, 0, COMMIT);
@@ -76,5 +76,6 @@ int main(int argc, char** args) {
                 paramID++;
         }
     }   
+    outlog << "Fim\n";
     return 0;
 }

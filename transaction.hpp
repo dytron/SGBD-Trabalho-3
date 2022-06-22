@@ -3,8 +3,18 @@
 
 #include <vector>
 
-enum STATE { WAITING, ACTIVE, COMMITED, ROLLBACKED };
-enum OP { READ, WRITE, COMMIT };
+//
+enum STATE {
+    WAITING,   // Em espera
+    ACTIVE,    // Ativa
+    COMMITED,  // Transação efetivada
+    ROLLBACKED // Sofreu rollback
+};
+enum OP {
+    READ,  // Leitura
+    WRITE, // Escrita
+    COMMIT // Efetivação
+};
 
 using namespace std;
 
